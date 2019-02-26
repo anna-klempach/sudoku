@@ -43,10 +43,6 @@ module.exports = function solveSudoku(matrix) {
     return matrix;
 }
 
-function compareRandom(a, b) {
-    return Math.random() - 0.5;
-}
-
 function sortMatrix(matrix, boxIndex) {
     let array = [];
     let count = 0;
@@ -117,7 +113,6 @@ function sortMatrix(matrix, boxIndex) {
                 continue;
             }
         }
-        possibleVariantsElement.sort(compareRandom);
         array[i].possibleVariants = [];
         for (let j = 0; j < possibleVariantsElement.length; j++) {
 
@@ -157,7 +152,6 @@ function checkElements(array, index, value) {
 
 function currentValueSearch(array, index) {
 
-
     for (let j = 0; j < array[index].possibleVariants.length; j++) {
         if (checkElements(array, index, array[index].possibleVariants[j]) == true) {
             array[index].currentValue = array[index].possibleVariants[j];
@@ -171,7 +165,6 @@ function currentValueSearch(array, index) {
                         array[index].currentValue = 0;
                         return false;
                     }
-
                 } else {
                     return array;
                 }
@@ -185,5 +178,4 @@ function currentValueSearch(array, index) {
             }
         }
     }
-
 }

@@ -12,68 +12,39 @@ module.exports = function solveSudoku(matrix) {
     ];
     let emptyElements = sortMatrix(matrix, boxIndex);
 
-    let isOnlyElements = [];
-    for (let i = 0; i < emptyElements.length; i++) {
-        if (emptyElements[i].isOnlyElement === 1) {
-            isOnlyElements.push(emptyElements[i]);
-        }
-    }
-    for (let i = 0; i < emptyElements.length; i++) {
-        for (let k = 0; k < isOnlyElements.length; k++) {
-            if ((emptyElements[i].row === isOnlyElements[k].row || emptyElements[i].col === isOnlyElements[k].col || emptyElements[i].box === isOnlyElements[k].box) && emptyElements[i].index !== isOnlyElements[k].index && emptyElements[i].possibleVariants.indexOf(emptyElements[k].currentValue) >= 0) {
-                emptyElements[i].possibleVariants.splice(emptyElements[i].possibleVariants.indexOf(isOnlyElements[k].currentValue), 1);
+    for (let i = 0; i < emptyElements.length - 1; i++) {
+        for (let j = i + 1; j < emptyElements.length; j++) {
+            if (emptyElements[i].possibleVariants.length > emptyElements[j].possibleVariants.length) {
+                buffer = emptyElements[i];
+                emptyElements[i] = emptyElements[j];
+                emptyElements[j] = buffer;
             }
         }
     }
 
-    for (let i = 0; i < emptyElements.length; i++) {
-        if (emptyElements[i].possibleVariants.length === 1 && emptyElements[i].isOnlyElement !== 1) {
-            emptyElements[i].currentValue = emptyElements[i].possibleVariants[0];
-        }
+    let count = 0;
+    while (emptyElements[count].isOnlyElement === 1 && count < emptyElements.length - 1) {
+        count++;
+    }
+    if (count === emptyElements.length - 1 && emptyElements[count].isOnlyElement !== 1) {
+        count--;
     }
 
+    if (count < emptyElements.length - 1) {
+        currentValueSearch(emptyElements, count);
+    }
 
-    //let singleEntries = findSingleEntries(emptyElements);
-    let array = currentValueSearch(emptyElements, 0);
-
-
-    for (let i = 0; i < array.length; i++) {
-        let col = array[i].col;
-        let row = array[i].row;
-        let value = array[i].currentValue
+    for (let i = 0; i < emptyElements.length; i++) {
+        let col = emptyElements[i].col;
+        let row = emptyElements[i].row;
+        let value = emptyElements[i].currentValue
         matrix[row][col] = value;
     }
-
-
-
     return matrix;
 }
 
-function findSingleEntries(array1) {
-    let array = [];
-
-    for (let i = 0; i < array1.length; i++) {
-        array.push(array1[i]);
-    }
-    let flag = 0;
-    for (let i = 0; i < array.length; i++) {
-        flag = 0;
-        for (let j = 0; j < array.length; j++) {
-            for (let index = 0; index < array[i].possibleVariants.length; index++) {
-                if ((array[i].col === array[j].col || array[i].row === array[j].row || array[i].box === array[j].box) && i !== j && array[j].possibleVariants.indexOf(array[i].possibleVariants[index]) > -1) {
-                    flag = 1;
-                    break;
-                }
-            }
-            if (flag === 1) {
-                break;
-            }
-        }
-        if (flag === 0) {
-            array[i].currentValue = array[i].possibleVariants[index];
-        }
-    }
-    return array;
+function compareRandom(a, b) {
+    return Math.random() - 0.5;
 }
 
 function sortMatrix(matrix, boxIndex) {
@@ -146,7 +117,7 @@ function sortMatrix(matrix, boxIndex) {
                 continue;
             }
         }
-
+        possibleVariantsElement.sort(compareRandom);
         array[i].possibleVariants = [];
         for (let j = 0; j < possibleVariantsElement.length; j++) {
 
@@ -183,166 +154,36 @@ function checkElements(array, index, value) {
     return true;
 }
 
-function currentValueSearch(array1, index) {
 
-    let array = [];
-
-    for (let i = 0; i < array1.length; i++) {
-        array.push(array1[i]);
-    }
+function currentValueSearch(array, index) {
 
 
-
-    if (array[index].isOnlyElement === 1) {
-        if (index === array.length - 1) {
-            return array;
-        }
-        currentValueSearch(array, index + 1);
-        let count = 0;
-        for (let n = 0; n < array.length; n++) {
-            if (array[n].currentValue !== 0) {
-                count++;
-            }
-        }
-
-        if (count === array.length) {
-            return array;
-        }
-
-    }
-    if (array[index].currentValue === 0) {
-        if (checkElements(array, index, array[index].possibleVariants[0]) == true) {
-            array[index].currentValue = array[index].possibleVariants[0];
+    for (let j = 0; j < array[index].possibleVariants.length; j++) {
+        if (checkElements(array, index, array[index].possibleVariants[j]) == true) {
+            array[index].currentValue = array[index].possibleVariants[j];
             if (index === array.length - 1) {
                 return array;
             } else {
-                currentValueSearch(array, index + 1);
-                count = 0;
-                for (let n = 0; n < array.length; n++) {
-                    if (array[n].currentValue !== 0) {
-                        count++;
+                if (currentValueSearch(array, index + 1) == false) {
+                    if (j < array[index].possibleVariants.length - 1) {
+                        continue;
+                    } else {
+                        array[index].currentValue = 0;
+                        return false;
                     }
-                }
 
-                if (count === array.length) {
+                } else {
                     return array;
                 }
-
             }
         } else {
-            for (let j = 1; j < array[index].possibleVariants.length; j++) {
-
-                if (checkElements(array, index, array[index].possibleVariants[j]) == true) {
-                    array[index].currentValue = array[index].possibleVariants[j];
-                    if (index === array.length - 1) {
-                        return array;
-                    } else {
-                        currentValueSearch(array, index + 1);
-                        count = 0;
-                        for (let n = 0; n < array.length; n++) {
-                            if (array[n].currentValue !== 0) {
-                                count++;
-                            }
-                        }
-
-                        if (count === array.length) {
-                            return array;
-                        }
-
-                    }
-                } else {
-                    if (j === array[index].possibleVariants.length - 1) {
-                        array[index].currentValue = 0;
-                        currentValueSearch(array, index - 1);
-                        count = 0;
-                        for (let n = 0; n < array.length; n++) {
-                            if (array[n].currentValue !== 0) {
-                                count++;
-                            }
-                        }
-
-                        if (count === array.length) {
-                            return array;
-                        }
-
-                    } else {
-                        continue;
-                    }
-                }
+            if (j === array[index].possibleVariants.length - 1) {
+                array[index].currentValue = 0;
+                return false;
+            } else {
+                continue;
             }
-        }
-
-    } else {
-        if (array[index].possibleVariants.indexOf(array[index].currentValue) === array[index].possibleVariants.length - 1) {
-            array[index].currentValue = 0;
-            currentValueSearch(array, index - 1);
-            count = 0;
-            for (let n = 0; n < array.length; n++) {
-                if (array[n].currentValue !== 0) {
-                    count++;
-                }
-            }
-
-            if (count === array.length) {
-                return array;
-            }
-
-        } else {
-
-
-            for (let j = array[index].possibleVariants.indexOf(array[index].currentValue) + 1; j < array[index].possibleVariants.length; j++) {
-                if (checkElements(array, index, array[index].possibleVariants[j]) == true) {
-                    array[index].currentValue = array[index].possibleVariants[j];
-                    if (index === array.length - 1) {
-                        return array;
-                    } else {
-                        currentValueSearch(array, index + 1);
-                        count = 0;
-                        for (let n = 0; n < array.length; n++) {
-                            if (array[n].currentValue !== 0) {
-                                count++;
-                            }
-                        }
-
-                        if (count === array.length) {
-                            return array;
-                        }
-
-                    }
-                } else {
-                    if (j === array[index].possibleVariants.length - 1) {
-                        array[index].currentValue = 0;
-                        currentValueSearch(array, index - 1);
-                        count = 0;
-                        for (let n = 0; n < array.length; n++) {
-                            if (array[n].currentValue !== 0) {
-                                count++;
-                            }
-                        }
-
-                        if (count === array.length) {
-                            return array;
-                        }
-
-                    } else {
-                        continue;
-                    }
-                }
-            }
-
         }
     }
 
 }
-/*const initial = [
-    [5, 3, 4, 6, 7, 8, 9, 0, 0],
-    [6, 7, 2, 1, 9, 5, 3, 4, 8],
-    [1, 9, 8, 3, 4, 2, 5, 6, 7],
-    [8, 5, 9, 7, 6, 1, 4, 2, 3],
-    [4, 2, 6, 8, 5, 3, 7, 9, 1],
-    [7, 1, 3, 9, 2, 4, 8, 5, 6],
-    [9, 6, 1, 5, 3, 7, 2, 8, 4],
-    [2, 8, 7, 4, 1, 9, 6, 3, 5],
-    [3, 4, 5, 2, 8, 6, 1, 7, 9]
-];
-solveSudoku(initial);*/
